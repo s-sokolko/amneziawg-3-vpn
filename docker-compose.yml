@@ -1,0 +1,27 @@
+services:
+  awg:
+    build:
+      context: .
+      network: host
+      args:
+        AWG_GO_REF: ${AWG_GO_REF:-master}
+        AWG_TOOLS_REF: ${AWG_TOOLS_REF:-master}
+    container_name: awg-go
+    restart: unless-stopped
+    env_file: .env
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.forwarding=1
+    ports:
+      - "${LISTEN_PORT}:${LISTEN_PORT}/udp"
+    volumes:
+      - ./data:/etc/amnezia/amneziawg
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
