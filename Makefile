@@ -1,7 +1,7 @@
 COMPOSE = docker compose
 SERVICE = awg
 
-.PHONY: init up down restart build logs shell add rm ls qr prune rebuild
+.PHONY: init up down start stop pull restart build logs shell add rm ls qr prune rebuild
 
 init:
 ifndef PUBLIC_IP
