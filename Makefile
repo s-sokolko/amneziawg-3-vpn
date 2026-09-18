@@ -5,34 +5,34 @@ SERVICE = awg
 
 init:
 ifndef PUBLIC_IP
-	$(error Использование: make init PUBLIC_IP=<ip_или_домен> [POLICY=build|pull] [PORT=<udp_порт>])
+	$(error Usage: make init PUBLIC_IP=<ip_or_domain> [POLICY=build|pull] [PORT=<udp_port>])
 endif
 	@POLICY_VAL="$(POLICY)"; \
 	[ -z "$$POLICY_VAL" ] && POLICY_VAL=pull; \
 	case "$$POLICY_VAL" in \
 		build|pull) ;; \
-		*) echo "POLICY должен быть 'build' или 'pull', получено: '$$POLICY_VAL'" >&2; exit 1 ;; \
+		*) echo "POLICY must be 'build' or 'pull', got: '$$POLICY_VAL'" >&2; exit 1 ;; \
 	esac; \
 	if [ -f .env ]; then \
-		echo "[*] .env уже существует, шаблон .env.example.$$POLICY_VAL не применяется (только PUBLIC_ENDPOINT/PORT обновятся ниже)"; \
+		echo "[*] .env already exists, template .env.example.$$POLICY_VAL is not applied (only PUBLIC_ENDPOINT/PORT are updated below)"; \
 	else \
 		cp .env.example.$$POLICY_VAL .env; \
-		echo "[*] .env создан из .env.example.$$POLICY_VAL"; \
+		echo "[*] .env created from .env.example.$$POLICY_VAL"; \
 	fi
 	@sed -i "s/^PUBLIC_ENDPOINT=.*/PUBLIC_ENDPOINT=$(PUBLIC_IP)/" .env
 ifdef PORT
 	@sed -i "s/^LISTEN_PORT=.*/LISTEN_PORT=$(PORT)/" .env
-	@echo "[*] LISTEN_PORT задан явно: $(PORT)"
+	@echo "[*] LISTEN_PORT set explicitly: $(PORT)"
 else
 	@if [ -z "$$(grep '^LISTEN_PORT=' .env | cut -d= -f2)" ]; then \
 		RANDPORT=$$(shuf -i 20000-60000 -n1); \
 		sed -i "s/^LISTEN_PORT=.*/LISTEN_PORT=$$RANDPORT/" .env; \
-		echo "[*] LISTEN_PORT сгенерирован: $$RANDPORT"; \
+		echo "[*] LISTEN_PORT generated: $$RANDPORT"; \
 	else \
-		echo "[*] LISTEN_PORT уже задан в .env, не трогаю: $$(grep '^LISTEN_PORT=' .env | cut -d= -f2)"; \
+		echo "[*] LISTEN_PORT is already set in .env, leaving it as is: $$(grep '^LISTEN_PORT=' .env | cut -d= -f2)"; \
 	fi
 endif
-	@echo "[*] Готово: PUBLIC_ENDPOINT=$(PUBLIC_IP) → можно: make up"
+	@echo "[*] Done: PUBLIC_ENDPOINT=$(PUBLIC_IP) -> now you can run: make up"
 
 up:
 	$(COMPOSE) up -d
@@ -67,13 +67,13 @@ shell:
 
 add:
 ifndef NAME
-	$(error Использование: make add NAME=<имя_клиента>)
+	$(error Usage: make add NAME=<client_name>)
 endif
 	$(COMPOSE) exec $(SERVICE) add-client.sh $(NAME)
 
 rm:
 ifndef NAME
-	$(error Использование: make rm NAME=<имя_клиента>)
+	$(error Usage: make rm NAME=<client_name>)
 endif
 	$(COMPOSE) exec $(SERVICE) remove-client.sh $(NAME)
 
@@ -82,18 +82,18 @@ ls:
 
 qr:
 ifndef NAME
-	$(error Использование: make qr NAME=<имя_клиента>)
+	$(error Usage: make qr NAME=<client_name>)
 endif
 	$(COMPOSE) exec $(SERVICE) sh -c "qrencode -t ansiutf8 < /etc/amnezia/amneziawg/clients/$(NAME).conf"
 
 prune:
-	@echo "ВНИМАНИЕ: это удалит контейнер, собранный образ и ВСЕ данные в ./data"
-	@echo "(ключи сервера и всех клиентов будут потеряны безвозвратно)."
-	@read -p "Продолжить? [y/N] " confirm; \
+	@echo "WARNING: this will remove the container, the built image and ALL data in ./data"
+	@echo "(the server and all client keys will be lost permanently)."
+	@read -p "Continue? [y/N] " confirm; \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 		$(COMPOSE) down -v --rmi local --remove-orphans; \
 		sudo rm -rf ./data; \
-		echo "[*] Удалено: контейнер, образ, ./data"; \
+		echo "[*] Removed: container, image, ./data"; \
 	else \
-		echo "Отменено"; \
+		echo "Cancelled"; \
 	fi

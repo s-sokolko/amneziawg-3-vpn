@@ -3,8 +3,8 @@ set -e
 source /usr/local/bin/common.sh
 
 NAME=$1
-[ -z "$NAME" ] && { echo "Использование: add-client.sh <имя>"; exit 1; }
-client_exists "$NAME" && { echo "Клиент '$NAME' уже существует"; exit 1; }
+[ -z "$NAME" ] && { echo "Usage: add-client.sh <name>"; exit 1; }
+client_exists "$NAME" && { echo "Client '$NAME' already exists"; exit 1; }
 
 OCTET=$(next_free_octet)
 IP="${SERVER_SUBNET_BASE}.${OCTET}"
@@ -24,7 +24,7 @@ PresharedKey = $PSK
 AllowedIPs = ${IP}/32
 EOF
 
-: "${PUBLIC_ENDPOINT:?Переменная PUBLIC_ENDPOINT не задана в .env}"
+: "${PUBLIC_ENDPOINT:?PUBLIC_ENDPOINT is not set in .env}"
 SPUB=$(server_pubkey)
 PORT=$(server_listen_port)
 
@@ -43,5 +43,5 @@ PORT=$(server_listen_port)
   echo "PersistentKeepalive = 25"
 } > "$CLIENTS_DIR/$NAME.conf"
 
-echo "[*] Клиент '$NAME' создан: $CLIENTS_DIR/$NAME.conf ($IP)"
+echo "[*] Client '$NAME' created: $CLIENTS_DIR/$NAME.conf ($IP)"
 

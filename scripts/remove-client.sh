@@ -3,8 +3,8 @@ set -e
 source /usr/local/bin/common.sh
 
 NAME=$1
-[ -z "$NAME" ] && { echo "Использование: remove-client.sh <имя>"; exit 1; }
-client_exists "$NAME" || { echo "Клиент '$NAME' не найден"; exit 1; }
+[ -z "$NAME" ] && { echo "Usage: remove-client.sh <name>"; exit 1; }
+client_exists "$NAME" || { echo "Client '$NAME' not found"; exit 1; }
 
 PUB=$(awk "/^### $NAME\$/{f=1} f && /^PublicKey/{print \$3; exit}" "$CONF")
 awg set "$IFACE" peer "$PUB" remove
@@ -17,5 +17,5 @@ awk -v name="### $NAME" '
 ' "$CONF" > "$CONF.tmp" && mv "$CONF.tmp" "$CONF"
 
 rm -f "$CLIENTS_DIR/$NAME.conf"
-echo "[*] Клиент '$NAME' удалён"
+echo "[*] Client '$NAME' removed"
 

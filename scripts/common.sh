@@ -6,7 +6,7 @@ CLIENTS_DIR="$CONF_DIR/clients"
 
 : "${SERVER_SUBNET_BASE:=10.8.1}"
 : "${CLIENT_DNS:=1.1.1.1}"
-: "${EXTERNAL_IFACE:=eth0}"   # интерфейс внутри контейнера — почти всегда eth0
+: "${EXTERNAL_IFACE:=eth0}"   # interface inside the container - almost always eth0
 
 server_pubkey() {
     grep '^PrivateKey' "$CONF" | cut -d' ' -f3 | awg pubkey
@@ -29,7 +29,7 @@ next_free_octet() {
             return
         fi
     done
-    echo "Нет свободных адресов в подсети" >&2
+    echo "No free addresses left in the subnet" >&2
     exit 1
 }
 

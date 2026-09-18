@@ -16,14 +16,14 @@ gen_S_values() {
 }
 
 if [ ! -f "$CONF" ]; then
-    echo "[*] Первый запуск: генерирую случайные параметры сервера"
+    echo "[*] First run: generating random server parameters"
 
     PRIV=$(awg genkey)
     HPK=$(awg genkey)
 
-    # LISTEN_PORT обязателен к этому моменту — его фиксирует `make init` в .env,
-    # т.к. compose должен знать порт для проброса заранее.
-    : "${LISTEN_PORT:?Переменная LISTEN_PORT не задана — запустите make init}"
+    # LISTEN_PORT must already be set at this point - `make init` pins it in .env,
+    # because compose needs to know the port to publish in advance.
+    : "${LISTEN_PORT:?LISTEN_PORT is not set - run make init}"
 
     JC=$(rand_int 4 12)
     JMIN=$(rand_int 10 40)
@@ -31,9 +31,10 @@ if [ ! -f "$CONF" ]; then
 
     gen_S_values
 
-    # H1-H4 намеренно фиксированы (не рандомизируются): при Header Protection
-    # (HeaderProtectionKey задан) документация рекомендует держать их в
-    # "совместимых" значениях — тип пакета прячет уже Header Protection.
+    # H1-H4 are intentionally fixed (not randomized): with Header Protection
+    # enabled (HeaderProtectionKey is set) the documentation recommends keeping
+    # them at "compatible" values - the packet type is already hidden by
+    # Header Protection.
     H1=1; H2=2; H3=3; H4=4
 
     CPA_LOW=$(rand_int 20 50); CPA_HIGH=$(rand_int $((CPA_LOW+20)) 120)
@@ -70,19 +71,19 @@ RandomTrailers = on
 PostUp = iptables -t nat -A POSTROUTING -o $EXTERNAL_IFACE -j MASQUERADE
 PostDown = iptables -t nat -D POSTROUTING -o $EXTERNAL_IFACE -j MASQUERADE
 EOF
-    echo "[*] Конфиг создан: $CONF (порт $LISTEN_PORT, интерфейс NAT: $EXTERNAL_IFACE)"
+    echo "[*] Config created: $CONF (port $LISTEN_PORT, NAT interface: $EXTERNAL_IFACE)"
 else
-    echo "[*] Использую существующий конфиг: $CONF"
+    echo "[*] Using existing config: $CONF"
 fi
 
 cleanup() {
-    echo "[*] Останавливаю интерфейс $IFACE"
+    echo "[*] Bringing down interface $IFACE"
     awg-quick down "$CONF" || true
     exit 0
 }
 trap cleanup SIGTERM SIGINT
 
-echo "[*] Поднимаю интерфейс $IFACE"
+echo "[*] Bringing up interface $IFACE"
 awg-quick up "$CONF"
 
 tail -f /dev/null &
