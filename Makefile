@@ -5,9 +5,20 @@ SERVICE = awg
 
 init:
 ifndef PUBLIC_IP
-	$(error Использование: make init PUBLIC_IP=<ip_или_домен> [PORT=<udp_порт>])
+	$(error Использование: make init PUBLIC_IP=<ip_или_домен> [POLICY=build|pull] [PORT=<udp_порт>])
 endif
-	@[ -f .env ] || cp .env.example .env
+	@POLICY_VAL="$(POLICY)"; \
+	[ -z "$$POLICY_VAL" ] && POLICY_VAL=pull; \
+	case "$$POLICY_VAL" in \
+		build|pull) ;; \
+		*) echo "POLICY должен быть 'build' или 'pull', получено: '$$POLICY_VAL'" >&2; exit 1 ;; \
+	esac; \
+	if [ -f .env ]; then \
+		echo "[*] .env уже существует, шаблон .env.example.$$POLICY_VAL не применяется (только PUBLIC_ENDPOINT/PORT обновятся ниже)"; \
+	else \
+		cp .env.example.$$POLICY_VAL .env; \
+		echo "[*] .env создан из .env.example.$$POLICY_VAL"; \
+	fi
 	@sed -i "s/^PUBLIC_ENDPOINT=.*/PUBLIC_ENDPOINT=$(PUBLIC_IP)/" .env
 ifdef PORT
 	@sed -i "s/^LISTEN_PORT=.*/LISTEN_PORT=$(PORT)/" .env
@@ -21,20 +32,32 @@ else
 		echo "[*] LISTEN_PORT уже задан в .env, не трогаю: $$(grep '^LISTEN_PORT=' .env | cut -d= -f2)"; \
 	fi
 endif
-	@echo "[*] PUBLIC_ENDPOINT=$(PUBLIC_IP) записан в .env — готово, можно: make up"
-
+	@echo "[*] Готово: PUBLIC_ENDPOINT=$(PUBLIC_IP) → можно: make up"
 
 up:
-	$(COMPOSE) up -d --build
+	$(COMPOSE) up -d
 
 down:
 	$(COMPOSE) down
+
+start:
+	$(COMPOSE) start
+
+stop:
+	$(COMPOSE) stop
 
 restart:
 	$(COMPOSE) restart
 
 build:
 	$(COMPOSE) build
+
+rebuild:
+	$(COMPOSE) build --no-cache
+	$(COMPOSE) up -d
+
+pull:
+	$(COMPOSE) pull
 
 logs:
 	$(COMPOSE) logs -f $(SERVICE)
@@ -74,8 +97,3 @@ prune:
 	else \
 		echo "Отменено"; \
 	fi
-
-rebuild:
-	$(COMPOSE) build --no-cache
-	$(COMPOSE) up -d
-

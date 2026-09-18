@@ -1,10 +1,11 @@
-FROM golang:1.25-bookworm AS builder
+ARG DEBIAN_CODENAME=bookworm
+ARG GO_VERSION=1.25
+
+FROM golang:${GO_VERSION}-${DEBIAN_CODENAME} AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git build-essential libmnl-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Пинните конкретные теги в .env (AWG_GO_REF / AWG_TOOLS_REF) для воспроизводимости —
-# master может в любой момент подвинуться на несовместимую версию.
 ARG AWG_GO_REF=master
 ARG AWG_TOOLS_REF=master
 
@@ -16,7 +17,7 @@ RUN git clone --depth 1 --branch "$AWG_TOOLS_REF" https://github.com/amnezia-vpn
     && make \
     && make install DESTDIR=/staging PREFIX=/usr
 
-FROM debian:bookworm-slim
+FROM debian:${DEBIAN_CODENAME}-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     iproute2 iptables iputils-ping qrencode bash grep gawk coreutils \
     && rm -rf /var/lib/apt/lists/*
